@@ -1,16 +1,6 @@
 # SCVI
 SCVI: An Effective Subgraph Matching Algorithm by Combining Edge Verification and Set Intersection
 
-## Binary Files
-Binary files of DAF are available for linux
-- daf_10min: DAF for subgraph matching, which sets time limit of 10 minutes for each query graph in a query set.
-- daf_parallel_10min: parallel version of DAF using openMP.
-- daf_parallel: parallel version of DAF without time limit.
-- daf_twitter: daf for a large data graph where the time limit can be given as an argument. 
-- daf_parallel_twitter: parallel version of DAF for a large data graph where the time limit can be given as an argument.
-
-The maximum number of query vertices is set to 400 for the binary file.
-
 ## Compile
 Under the root directory of the project, execute the following commands to compile the source code.
 
