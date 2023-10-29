@@ -1,0 +1,1 @@
+/opt/rh/devtoolset-8/root/usr/bin/c++   -std=c++14 -O3 -g -Wall -pthread -march=native  -rdynamic CMakeFiles/ReassignLabel.dir/ReassignLabel.cpp.o  -o ReassignLabel 

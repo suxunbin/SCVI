@@ -1,0 +1,30 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+../configuration/config.h
+
+../configuration/types.h
+cstdint
+-
+stdlib.h
+-
+
+../graph/graph.h
+unordered_map
+-
+iostream
+-
+configuration/types.h
+../graph/configuration/types.h
+configuration/config.h
+../graph/configuration/config.h
+
+/home/haihe/common/SubgraphMatching-master/matching/GraphConverter.cpp
+graph/graph.h
+/home/haihe/common/SubgraphMatching-master/matching/graph/graph.h
+
