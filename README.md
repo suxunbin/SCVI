@@ -10,6 +10,15 @@ Binary files of DAF are available for linux
 - daf_parallel_twitter: parallel version of DAF for a large data graph where the time limit can be given as an argument.
 
 The maximum number of query vertices is set to 400 for the binary file.
+
+## Compile
+Under the root directory of the project, execute the following commands to compile the source code.
+
+```zsh
+cd src
+make
+```
+
 ## Run
 ```
 Options:
