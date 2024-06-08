@@ -7,30 +7,25 @@ Query::Query()
 Query::~Query()
 {
 	delete[] this->label_list;
-	delete[] this->edge_relation;
+	for (unsigned i = 0; i < this->vertex_num; ++i)
+		delete[] this->edge_relation[i];
     delete[] this->neighbor_list;
 	delete[] this->neighbor_label_frequency;
-	delete[] this->backward_neighbor;
-	delete[] this->forward_neighbor; 
+	delete[] this->backward_neighbor_set; 
+	delete[] this->forward_neighbor_set; 
 	delete[] this->repeated_list; 
-	delete[] this->repeated_vertex_set; 
+	delete[] this->repeated_vertex_set;
 	delete[] this->vertex_state; 
-	delete[] this->forest_match_order;
-	delete[] this->leaf_num;
-	delete[] this->CEB_flag;
-	delete[] this->CEB_update; 
-	delete[] this->CEB_width; 
-	delete[] this->CEB_father_idx; 
-	delete[] this->CEB_write; 
+	delete[] this->leaf_num; 
+	delete[] this->CEB_flag; 
+	delete[] this->CEB_valid; 
 	delete[] this->CEB_iter; 
-	delete[] this->parent; 
-	delete[] this->repeat;
-	delete[] this->repeat_state;
-	delete[] this->NEC;
+	delete[] this->children; 
+	delete[] this->encoding; 
 	delete[] this->score;
 }
 
-void Query::read(const string& filename) // read query graph
+void Query::read(const string& filename)
 {
 	char type;
 	unsigned vid;
@@ -45,40 +40,40 @@ void Query::read(const string& filename) // read query graph
 			fin >> this->vertex_num;
 			fin >> this->edge_num;
 			this->label_list = new unsigned[this->vertex_num];
-			this->edge_relation = new unsigned[this->vertex_num];
+			this->edge_relation = new bool*[this->vertex_num];
 			for (unsigned i = 0; i < this->vertex_num; ++i)
-				this->edge_relation[i] = 0;
+			{
+				this->edge_relation[i] = new bool[this->vertex_num];
+				for (unsigned j = 0; j < this->vertex_num; ++j)
+					this->edge_relation[i][j] = false;
+			}
 			this->neighbor_list = new vector<unsigned>[this->vertex_num];
 			this->neighbor_label_frequency = new unordered_map<unsigned, unsigned>[this->vertex_num];
-			this->backward_neighbor = new vector<unsigned>[this->vertex_num];
-			this->forward_neighbor = new vector<unsigned>[this->vertex_num];
+			this->backward_neighbor_set = new vector<unsigned>[this->vertex_num];
+			this->forward_neighbor_set = new vector<unsigned>[this->vertex_num];
+			this->black_backward_neighbor = new vector<unsigned>[this->vertex_num]; 
+			this->white_backward_neighbor = new vector<unsigned>[this->vertex_num]; 
 			this->vertex_state = new uint16_t[this->vertex_num];
 			for (unsigned i = 0; i < this->vertex_num; ++i)
 				this->vertex_state[i] = 0;
-			this->forest_match_order = new vector<unsigned>[this->vertex_num];
 			this->leaf_num = new unsigned[this->vertex_num];
 			for (unsigned i = 0; i < this->vertex_num; ++i)
 				this->leaf_num[i] = 0;
-			this->score = new double[this->vertex_num];
 			this->CEB_flag = new bool[this->vertex_num];
-			this->CEB_update = new bool[this->vertex_num];
-			this->CEB_width = new unsigned[this->vertex_num];
-			this->CEB_father_idx = new unsigned[this->vertex_num];
-			this->CEB_write = new unsigned[this->vertex_num];
+			this->CEB_valid = new bool[this->vertex_num];
 			this->CEB = new unsigned*[this->vertex_num];
 			this->CEB_iter = new unsigned[this->vertex_num];
-			this->repeat_state = new bool[this->vertex_num];
-			this->NEC = new unsigned[this->vertex_num];
 			for (unsigned i = 0; i < this->vertex_num; ++i)
 			{
 				this->CEB_flag[i] = false;
-				this->CEB_update[i] = false;
-				this->CEB_width[i] = 0;
-				this->CEB_write[i] = 32;
+				this->CEB_valid[i] = false;
 				this->CEB_iter[i] = 0;
-				this->NEC[i] = 0;
 			}			
-			this->parent = new vector<unsigned>[this->vertex_num];
+			this->children = new vector<unsigned>[this->vertex_num];
+			this->encoding = new bool[this->vertex_num];
+			for (unsigned i = 0; i < this->vertex_num; ++i)
+				this->encoding[i] = true;
+			this->score = new double[this->vertex_num];
 		}
 		else if (type == 'v')
 		{
@@ -98,14 +93,14 @@ void Query::read(const string& filename) // read query graph
 				this->neighbor_label_frequency[dst_vid][this->label_list[src_vid]] = 1;
 			else
 				this->neighbor_label_frequency[dst_vid][this->label_list[src_vid]]++;
-			this->edge_relation[src_vid] = this->edge_relation[src_vid] | (1 << dst_vid);
-			this->edge_relation[dst_vid] = this->edge_relation[dst_vid] | (1 << src_vid);
+			this->edge_relation[src_vid][dst_vid] = true;
+			this->edge_relation[dst_vid][src_vid] = true;
 		}
 	}
 	fin.close();
 }
 
-void Query::CFL_decomposition() // CFL_decomposition
+void Query::CFL_decomposition()
 {
 	queue<unsigned> q;
 	unsigned* degree = new unsigned[this->vertex_num];
@@ -159,36 +154,8 @@ void Query::CFL_decomposition() // CFL_decomposition
 	}
 	for (unsigned i = 0; i < this->vertex_num; ++i)
 	{
-		if (this->vertex_state[i] == 0)
-			this->core.push_back(i);
-		else if (this->vertex_state[i] == 2)
+		if (this->vertex_state[i] == 2)
 			this->leaf.push_back(i);
 	}
-
-	if (this->core.size() == this->vertex_num) //only core
-	{
-		this->query_state = 0;
-		return;
-	}
-	
-	if ((this->core.size() + this->leaf.size()) == this->vertex_num) //core + leaf
-	{
-		this->query_state = 1;
-		return;
-	}
-
-	if (this->core.size() == 0) //tree + leaf
-	{
-		for (unsigned i = 0; i < this->vertex_num; ++i)
-		{
-			if (this->vertex_state[i] == 1)
-				this->tree.push_back(i);
-		}
-		this->query_state = 2;
-		return;
-	}
-
-	// core + forest + leaf
-	this->query_state = 3;
 	return;
 }

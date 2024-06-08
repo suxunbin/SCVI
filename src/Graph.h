@@ -30,10 +30,11 @@ public:
 	unsigned label_max_frequency = 0;
 	unsigned average_degree;
 
-	pair<unsigned, unsigned>** edge_index; // first: the number of edges, second: the index of the head pointer
+	pair<unsigned, unsigned>** edge_index; 
 	vector<unsigned*> head_pointer_list;
 	bool **BloomFilter1;
 	bool **BloomFilter2;
+	//bool **BloomFilter3;
 	uint64_t ***hash_bucket;
 	unsigned range;
 	Graph();

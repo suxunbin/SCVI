@@ -17,17 +17,16 @@ public:
 	unsigned start_vertex;
 	unsigned start_vertex_label;
 	unsigned start_vertex_offset;
-	bool **vfs; //vertex filtering state: vfs[i][j]=true represents that data vertex i has been already filtered in regard to query vertex j
-	unsigned *offset_list;
-	vector<unsigned> adjacency_list;
-	unsigned **candidate_vertex_set;
-	unsigned *candidate_size;
-	unsigned **candidate_valid;
-	unsigned **candidate_frequency;
-	double **candidate_workload; //the workload of the subtree rooted at this candidate
-	unsigned *max_mapping_width; //the maximum width of the data vertices of the query veretx
+
+	unordered_map<unsigned, pair<unsigned, unsigned>>** offset_list; 
+	vector<unsigned> adjacency_list; 
+
+	unsigned **candidate_set; 
+	unsigned *candidate_size; 
+	unsigned **candidate_flag; 
+
 	QCSR(Graph& G, Query& Q);
 	~QCSR();
-	void build(Graph& G, Query& Q, bool opt_flag);
+	void build(Graph& G, Query& Q);
 };
 #endif
